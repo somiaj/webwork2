@@ -102,11 +102,8 @@ sub title {
 			&& before($set->reduced_scoring_date))
 		{
 			$title .= ' - '
-				. $r->maketext(
-					'Due [_1], after which reduced scoring is available until [_2]',
-					$self->formatDateTime($set->reduced_scoring_date, undef, $ce->{studentDateDisplayFormat}),
-					$self->formatDateTime($set->due_date,             undef, $ce->{studentDateDisplayFormat})
-				);
+				. $r->maketext('Due [_1]',
+					$self->formatDateTime($set->reduced_scoring_date, undef, $ce->{studentDateDisplayFormat}));
 		} elsif ($set->due_date) {
 			$title .= ' - '
 				. $r->maketext('Closes [_1]',
@@ -321,8 +318,8 @@ sub body {
 
 		if (before($reduced_scoring_date)) {
 			print CGI::div({class=>"alert alert-warning mb-3"},
-				$r->maketext("After the reduced scoring period begins all work counts for [_1]% of its value.",
-					$reducedScoringPerCent));
+				$r->maketext("After the due date this set enters the reduced scoring period until it closes on [_1]. Work completed during the reduced scoring period will count for [_2]% of its value.",
+					$dueDate, $reducedScoringPerCent));
 
 		} elsif (between($reduced_scoring_date, $set->due_date())) {
 			print CGI::div({class=>"alert alert-warning mb-3"},
