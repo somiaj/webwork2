@@ -186,6 +186,7 @@ sub defineProblemEnvir {
 	$envir{recitationName}   = $user->recitation;
 	$envir{recitationNumber} = $envir{recitationName};
 	$envir{setNumber}        = $set->set_id;
+	$envir{setDescription}   = $set->description();
 	$envir{studentLogin}     = $user->user_id;
 	$envir{studentName}      = $user->first_name . " " . $user->last_name;
 	$envir{studentID}        = $user->student_id;
