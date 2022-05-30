@@ -259,7 +259,7 @@ sub formatAnswerRow {
 		$resultString      = $self->maketext("correct");
 		$resultStringClass = "ResultsWithoutError";
 	} elsif (($rh_answer->{type} // '') eq 'essay') {
-		$resultString = $self->maketext("Ungraded");
+		$resultString = $self->maketext("manually graded");
 		$self->{essayFlag} = 1;
 	} elsif ($answerScore == 0) {
 		$resultStringClass = "ResultsWithError";
