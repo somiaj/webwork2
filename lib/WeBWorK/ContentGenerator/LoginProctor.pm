@@ -42,66 +42,45 @@ sub if_loggedin {
 
 sub info {
 	my ($self) = @_;
-	my $r = $self->r;
-	my $ce = $r->ce;
+	my $r      = $self->r;
+	my $ce     = $r->ce;
 
-	my $result;
+	# Get problem set info. Code taken from ProblemSet.pm
+	my $effectiveUser = $r->db->getUser($r->param('effectiveUser'));
+	my $set           = $r->authz->{merged_set};
+	my $displayMode   = $r->param('displayMode') || $ce->{pg}->{options}->{displayMode};
 
-	# This section should be kept in sync with the Home.pm version
-	my $site_info = $ce->{webworkFiles}->{site_info};
-	if (defined $site_info and $site_info) {
-		# deal with previewing a temporary file
-		# FIXME: DANGER: this code allows viewing of any file
-		# FIXME: this code is disabled because PGProblemEditor no longer uses editFileSuffix
-		#if (defined $r->param("editMode") and $r->param("editMode") eq "temporaryFile"
-		#		and defined $r->param("editFileSuffix")) {
-		#	$site_info .= $r->param("editFileSuffix");
-		#}
+	# Hack to prevent errors from uninitialized set_headers.
+	$set->set_header('defaultHeader') unless $set->set_header =~ /\S/;    # (some non-white space character required)
+	my $screenSetHeader =
+		($set->set_header eq 'defaultHeader') ? $ce->{webworkFiles}->{screenSnippets}->{setHeader} : $set->set_header;
 
-		if (-f $site_info) {
-			my $text = eval { readFile($site_info) };
-			if ($@) {
-				$result .= CGI::h2($r->maketext("Site Information"));
-				$result .= CGI::div({ class => 'alert alert-danger p-1 mb-2' }, $@);
-			} elsif ($text =~ /\S/) {
-				$result .= CGI::h2($r->maketext("Site Information"));
-				$result .= $text;
-			}
-		}
-	}
+	# Decide what to do about problem number.
+	my $problem = WeBWorK::DB::Record::UserProblem->new(
+		problem_id  => 0,
+		set_id      => $set->set_id,
+		login_id    => $effectiveUser->user_id,
+		source_file => $screenSetHeader,
+		# the rest of Problem's fields are not needed, i think
+	);
 
-	# FIXME this is basically the same code as above... TIME TO REFACTOR!
-	my $login_info = $ce->{courseFiles}->{login_info};
-	if (defined $login_info and $login_info) {
-		# login info is relative to the templates directory, apparently
-		$login_info = $ce->{courseDirs}->{templates} . "/$login_info";
+	my $pg = WeBWorK::PG->new(
+		$ce,
+		$effectiveUser,
+		$r->param('key'),
+		$set,
+		$problem,
+		$set->psvn,
+		{}, # no form fields!
+		{ # translation options
+			displayMode     => $displayMode,
+			showHints       => 0,
+			showSolutions   => 0,
+			processAnswers  => 0,
+		},
+	);
 
-		# deal with previewing a temporary file
-		# FIXME: DANGER: this code allows viewing of any file
-		# FIXME: this code is disabled because PGProblemEditor no longer uses editFileSuffix
-		#if (defined $r->param("editMode") and $r->param("editMode") eq "temporaryFile"
-		#		and defined $r->param("editFileSuffix")) {
-		#	$login_info .= $r->param("editFileSuffix");
-		#}
-
-		if (-f $login_info) {
-			my $text = eval { readFile($login_info) };
-			if ($@) {
-				$result .= CGI::h2("Login Info");
-				$result .= CGI::div({ class => 'alert alert-danger p-1 mb-2' }, $@);
-			} elsif ($text =~ /\S/) {
-				$result .= CGI::h2("Login Info");
-				$result .= $text;
-			}
-		}
-	}
-
-	if (defined $result and $result ne "") {
-#		return CGI::div({class=>"info-box", id=>"InfoPanel"}, $result);
-                return $result;
-	} else {
-		return "";
-	}
+	return CGI::h2($r->maketext('Set Info')) . $pg->{body_text};
 }
 
 sub body {
