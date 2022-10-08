@@ -765,6 +765,23 @@ sub pre_header_initialize {
 				$cleanSet->version_last_attempt_time($set->version_last_attempt_time);
 				$cleanSet->version_time_limit($set->version_time_limit);
 				$cleanSet->attempts_per_version($set->attempts_per_version);
+
+				# If configured to skip grade proctor authorization, convert the
+				# version set to a normal gateway quiz so it can be accessed
+				# and graded without proctor authentication.
+				if (
+					$set->assignment_type eq 'proctored_gateway'
+					&& (
+						$ce->{skip_grade_proctor_auth} eq 'yes'
+						|| ($ce->{skip_grade_proctor_auth} eq 'set'
+							&& $set->restricted_login_proctor eq 'Yes')
+					)
+					)
+				{
+					$self->{assignment_type} = 'gateway';
+					$set->assignment_type('gateway');
+					eval { $db->deleteAllProctorKeys($effectiveUserName); }
+				}
 				$cleanSet->assignment_type($set->assignment_type);
 				$db->putSetVersion($cleanSet);
 
