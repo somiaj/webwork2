@@ -35,13 +35,14 @@ sub new {
 	my ($class, $r, $pg, $userProblem) = @_;
 	$class = ref($class) ? ref($class) : $class;
 
-	my $db        = $r->db;
-	my $urlpath   = $r->urlpath;
-	my $courseID  = $urlpath->arg('courseID');
-	my $setID     = $userProblem->set_id;
-	my $versionID = ref($userProblem) =~ /::ProblemVersion/ ? $userProblem->version_id : 0;
-	my $studentID = $userProblem->user_id;
-	my $problemID = $userProblem->problem_id;
+	my $db           = $r->db;
+	my $urlpath      = $r->urlpath;
+	my $courseID     = $urlpath->arg('courseID');
+	my $setID        = $userProblem->set_id;
+	my $versionID    = ref($userProblem) =~ /::ProblemVersion/ ? $userProblem->version_id : 0;
+	my $studentID    = $userProblem->user_id;
+	my $problemID    = $userProblem->problem_id;
+	my $problemValue = $userProblem->value;
 
 	# Get the currently saved score.
 	my $recordedScore = $userProblem->status;
@@ -57,6 +58,7 @@ sub new {
 		course_id      => $courseID,
 		student_id     => $studentID,
 		problem_id     => $problemID,
+		problem_value  => $problemValue,
 		set_id         => $setID,
 		version_id     => $versionID,
 		recorded_score => $recordedScore,
@@ -148,7 +150,47 @@ sub insertGrader {
 		}
 	}
 
-	# Total problem score
+	# Total point value. Only show if point value > 1.
+	print CGI::div(
+		{ class => 'row align-items-center mb-2' },
+		CGI::label(
+			{ class => 'col-fixed col-form-label' },
+			$self->maketext('Point Value (0 - [_1]):', $self->{problem_value}) . ' '
+				. CGI::a(
+				{
+					class           => 'help-popup',
+					data_bs_content =>
+						$self->maketext(
+							'The initial value is the total number of points for the answer(s) that are '
+								. 'currently shown.  If this is modified, it will be used to compute '
+								. 'the total problem score below.  This score is not saved, and will be '
+								. 'reset to the score for the shown answer(s) if the page is reloaded.'
+						),
+					data_bs_placement => 'top',
+					data_bs_toggle    => 'popover'
+				},
+				CGI::i({ class => 'icon fas fa-question-circle', aria_hidden => 'true', data_alt => 'Help Icon' }, '')
+					. CGI::span({ class => 'sr-only-glyphicon' }, 'Help Icon')
+				)
+			)
+			. CGI::div(
+			{ class => 'col-sm' },
+			CGI::input({
+				type            => 'number',
+				id              => "score_problem$self->{problem_id}_points",
+				class           => 'problem-points form-control form-control-sm w-auto d-inline',
+				min             => 0,
+				max             => $self->{problem_value},
+				step            => 0.1,
+				autocomplete    => 'off',
+				data_problem_id => $self->{problem_id},
+				value           => wwRound(1, $self->{recorded_score} * $self->{problem_value}),
+				size            => 5
+			})
+			)
+	) if ($self->{problem_value} > 1);
+
+	# Total problem score.
 	print CGI::div(
 		{ class => 'row align-items-center mb-2' },
 		CGI::label(

@@ -34,6 +34,7 @@
 		part.addEventListener('input', () => {
 			const problemId = part.dataset.problemId;
 			const answerLabels = JSON.parse(part.dataset.answerLabels);
+			const pointValue = document.getElementById(`score_problem${problemId}_points`);
 
 			if (!part.checkValidity()) part.classList.add('is-invalid');
 			else part.classList.remove('is-invalid');
@@ -43,17 +44,43 @@
 				const partElt = document.getElementById(`score_problem${problemId}_${label}`);
 				score += partElt.value * partElt.dataset.weight;
 			});
+			pointValue.value = Math.round(score * pointValue.max / 10) / 10;
 			document.getElementById(`score_problem${problemId}`).value = Math.round(score);
 			document.getElementById(`grader_messages_problem${problemId}`).innerHTML = '';
+		});
+	});
+
+	// Update problem score if point value changes and is a valid value.
+	document.querySelectorAll('.problem-points').forEach((points) => {
+		points.addEventListener('input', () => {
+			if (points.checkValidity()) {
+				const problemId = points.dataset.problemId;
+				const problemScore = document.getElementById(`score_problem${problemId}`);
+				points.classList.remove('is-invalid');
+				problemScore.classList.remove('is-invalid');
+				problemScore.value = Math.round(100 * points.value / points.max);
+			} else {
+				points.classList.add('is-invalid');
+			}
 		});
 	});
 
 	// Clear messages when the score or comment are changed.
 	document.querySelectorAll('.problem-score,.grader-problem-comment').forEach((el) => {
 		el.addEventListener('input', () => {
-			if (!el.checkValidity()) el.classList.add('is-invalid');
-			else el.classList.remove('is-invalid');
+			if (!el.checkValidity()) {
+				el.classList.add('is-invalid');
+			} else {
+				el.classList.remove('is-invalid');
 
+				// Update point value if total percent was changed.
+				if (el.classList.contains('problem-score')) {
+					const problemId = el.dataset.problemId;
+					const pointValue = document.getElementById(`score_problem${problemId}_points`);
+					pointValue.classList.remove('is-invalid');
+					pointValue.value = Math.round(el.value * pointValue.max / 10) / 10;
+				}
+			}
 			document.getElementById(`grader_messages_problem${el.dataset.problemId}`).innerHTML = '';
 		});
 	});
