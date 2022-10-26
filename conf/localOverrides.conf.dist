@@ -243,6 +243,10 @@ $mail{feedbackRecipients}    = [
 # This sets if MathQuill is available on the PG editor for use as a minimal latex equation editor
 #$options{PGMathQuill}= 1;
 
+# This sets the location and number of backups created when saving problems with the problem editor.
+#$courseDirs{backupDir} = "$courseDirs{tmpEditFileDir}/__backup__";
+#$numberOfBackups = 5;
+
 ################################################################################
 # PG subsystem options
 ################################################################################

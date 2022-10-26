@@ -1018,6 +1018,30 @@ sub getFilePaths {
 	#warn "editfile path is $editFilePath and tempFile is $tempFilePath and inputFilePath is ". $self->{inputFilePath};
 }
 
+# Backup problem files, to allow to revert to previous versions.
+sub backupFile {
+	my $self            = shift;
+	my $outputFilePath  = shift;
+	my $r               = $self->r;
+	my $ce              = $r->ce;
+	my $templateDir     = $ce->{courseDirs}->{templates};
+	my $numberOfBackups = $ce->{numberOfBackups};
+	my $backupDir       = $ce->{courseDirs}->{backupDir};
+	my $backupFilePath  = "$backupDir/" . ($outputFilePath =~ s/^$templateDir\///r);
+	return unless ($numberOfBackups > 0);
+
+	# Make sure backup directory exists.
+	WeBWorK::Utils::surePathToFile($templateDir, $backupFilePath);
+
+	# Copy backup files to the next file in chain.
+	foreach (reverse(1 .. $numberOfBackups)) {
+		my $prevFile   = ($_ == 1) ? $outputFilePath : $backupFilePath . '.' . ($_ - 1);
+		my $backupFile = $backupFilePath . ".$_";
+		copy($prevFile, $backupFile) if (-e $prevFile);
+	}
+
+}
+
 ################################################################################
 # saveFileChanges does most of the work. it is a separate method so that it can
 # be called from either pre_header_initialize() or initilize(), depending on
@@ -1027,7 +1051,7 @@ sub getFilePaths {
 # sometimes less.
 ################################################################################
 sub saveFileChanges {
-	my ($self, $outputFilePath, $problemContents ) = @_;
+	my ($self, $outputFilePath, $backup) = @_;
 	my $r             = $self->r;
 	my $ce            = $r->ce;
 
@@ -1035,12 +1059,8 @@ sub saveFileChanges {
 	# my $editFilePath  = $self->{editFilePath}; # not used??
 	my $sourceFilePath  = $self->{sourceFilePath};
 	my $tempFilePath    = $self->{tempFilePath};
+	my $problemContents = ${ $self->{r_problemContents} };
 
-	if (defined($problemContents) and ref($problemContents) ) {
-		$problemContents = ${$problemContents};
-	} elsif( ! not_blank($problemContents)  ) {      # if the problemContents is undefined or empty
-		$problemContents = ${$self->{r_problemContents}};
-	}
 	##############################################################################
 	# read and update the targetFile and targetFile.tmp files in the directory
 	# if a .tmp file already exists use that, unless the revert button has been pressed.
@@ -1071,6 +1091,9 @@ sub saveFileChanges {
 		# make sure any missing directories are created
 		WeBWorK::Utils::surePathToFile($ce->{courseDirs}->{templates}, $outputFilePath);
 		die "outputFilePath is unsafe!" unless path_is_subdir($outputFilePath, $ce->{courseDirs}->{templates}, 1); # 1==path can be relative to dir
+
+		# Backup file if asked.
+		$self->backupFile($outputFilePath, $problemContents) if $backup;
 
 		eval {
 			local *OUTPUTFILE;
@@ -1292,7 +1315,7 @@ sub view_handler {
 
 	my $do_not_save = 0;
 	my $file_type = $self->{file_type};
-	$self->saveFileChanges($tempFilePath,);
+	$self->saveFileChanges($tempFilePath, 0);
 
 	########################################################
 	# construct redirect URL and redirect
@@ -1650,7 +1673,7 @@ sub save_handler {
 
 	my $do_not_save = 0;
 	my $file_type = $self->{file_type};
-	$self->saveFileChanges($outputFilePath);
+	$self->saveFileChanges($outputFilePath, 1);
 	#################################################
 	# Set up redirect to Problem.pm
 	#################################################
@@ -1932,7 +1955,7 @@ sub save_as_handler {
 	}
 
 	unless ($do_not_save ) {
-		$self->saveFileChanges($outputFilePath);
+		$self->saveFileChanges($outputFilePath, 0);
 		my $targetProblemNumber;
 
 		if ($saveMode eq 'rename' and -r $outputFilePath) {
