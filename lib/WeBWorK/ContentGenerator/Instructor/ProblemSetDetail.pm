@@ -199,14 +199,15 @@ use constant FIELD_PROPERTIES => {
 		default   => 'No',
 	},
 	assignment_type => {
-		name      => x("Assignment type"),
-		type      => "choose",
-		override  => "all",
-		choices   => [qw( default gateway proctored_gateway jitar)],
-		labels    => {	default => "homework",
-				gateway => "gateway/quiz",
-				proctored_gateway => "proctored gateway/quiz",
-				jitar => "just-in-time"
+		name     => x('Assignment type'),
+		type     => 'choose',
+		override => 'all',
+		choices  => [qw(default gateway proctored_gateway jitar)],
+		labels   => {
+			default           => x('homework'),
+			gateway           => x('test'),
+			proctored_gateway => x('proctored test'),
+			jitar             => x('just-in-time')
 		},
 	},
 	version_time_limit => {
@@ -219,11 +220,14 @@ use constant FIELD_PROPERTIES => {
 		convertby => 60,
 	},
 	time_limit_cap => {
-		name      => x("Cap Test Time at Set Close Date?"),
-		type      => "choose",
-		override  => "all",
-		choices   => [qw(0 1)],
-		labels    => { '0' => 'No', '1' =>'Yes' },
+		name     => x('Cap Test Time at Set Close Date'),
+		type     => 'choose',
+		override => 'all',
+		choices  => [qw(0 1)],
+		labels   => {
+			'0' => x('No'),
+			'1' => x('Yes')
+		},
 	},
 	attempts_per_version => {
 		name      => x("Number of Graded Submissions per Test (0=infty)"),
@@ -268,11 +272,17 @@ use constant FIELD_PROPERTIES => {
 #		labels    => { "" => 0 },
 	},
 	'hide_score:hide_score_by_problem' => {
-		name      => x("Show Scores on Finished Assignments?"),
-		type      => "choose",
-		choices   => [ qw( N:N Y:Y BeforeAnswerDate:N N:Y BeforeAnswerDate:Y ) ],
-		override  => "any",
-		labels    => { 'N:N' => 'Yes', 'Y:Y' => 'No', 'BeforeAnswerDate:N' => x('Only after set answer date'), 'N:Y' => x('Totals only (not problem scores)'), 'BeforeAnswerDate:Y' => x('Totals only, only after answer date') },
+		name     => x('Show Scores on Finished Tests'),
+		type     => 'choose',
+		choices  => [qw(N:N Y:Y BeforeAnswerDate:N N:Y BeforeAnswerDate:Y)],
+		override => 'any',
+		labels   => {
+			'N:N'                => x('Yes'),
+			'Y:Y'                => x('No'),
+			'BeforeAnswerDate:N' => x('Only after set answer date'),
+			'N:Y'                => x('Totals only (not problem scores)'),
+			'BeforeAnswerDate:Y' => x('Totals only, only after answer date')
+		},
 	},
 	hide_work         => {
 		name      => x("Show Problems on Finished Tests"),
@@ -850,7 +860,7 @@ sub extraSetFields {
 				$gwFields .= CGI::Tr(CGI::td([@fieldData]));
 			}
 		}
-		$gwhdr .= CGI::Tr(CGI::td({ colspan => $nF }, CGI::em($r->maketext("Gateway parameters"))))
+		$gwhdr .= CGI::Tr(CGI::td({ colspan => $nF }, CGI::em($r->maketext('Test parameters'))))
 			if ($nF);
 		$extraFields = "$gwhdr$gwFields";
 
