@@ -161,23 +161,8 @@ sub go {
 	# update all of the grades because things can get out of sync if
 	# instructors add or modify sets.
 	if ($ce->{LTIGradeMode} and ref($r->{db}//'')  ) {
-
 	  my $grader = WeBWorK::Authen::LTIAdvanced::SubmitGrade->new($r);
-
-	  my $post_connection_action = sub {
-	    my $grader = shift;
-
-	    # catch exceptions generated during the sending process
-	    my $result_message = eval { $grader->mass_update() };
-	    if ($@) {
-	      # add the die message to the result message
-	      $result_message .= "An error occurred while trying to update grades via LTI.\n"
-		. "The error message is:\n\n$@\n\n";
-	      # and also write it to the apache log
-	      $r->log->error("An error occurred while trying to update grades via LTI: $@\n");
-	    }
-	  };
-	  $r->connection->pool->cleanup_register($post_connection_action, $grader);
+	  $grader->mass_update('auto');
 	}
 
 	# check to verify if there are set-level problems with running
@@ -1058,6 +1043,17 @@ sub links {
 					   	&$makelink("${pfx}Config",
 						   	urlpath_args => { %args },
 						   	systemlink_args => \%systemlink_args));
+				}
+				if ($ce->{LTIGradeMode} && $authz->hasPermissions($userID, 'score_sets')) {
+					print CGI::li(
+						{ class => 'nav-item' },
+						&$makelink(
+							"${pfx}LTIUpdate",
+							text            => $r->maketext('LTI Grade Update'),
+							urlpath_args    => \%args,
+							systemlink_args => \%systemlink_args,
+						)
+					);
 				}
 				print CGI::li({ class => 'nav-item' },
 					$self->helpMacro('instructor_links', { label => $r->maketext('Help'), class => 'nav-link' }));
