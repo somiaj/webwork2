@@ -241,9 +241,11 @@ sub body {
 			$r->maketext("Section"), $r->maketext("Name"),
 			"&nbsp;",                $r->maketext("Latest Answers"),
 			"&nbsp;",                $r->maketext("Mark Correct") . "<br>" . $selectAll,
-			"&nbsp;",                $r->maketext("Score (%)"),
-			"&nbsp;",                $r->maketext("Comment")
-		])
+			"&nbsp;"
+		]),
+		CGI::th({ style => 'width: 75px' }, $r->maketext("Score (%)")),
+		CGI::th("&nbsp;"),
+		CGI::th({ style => 'width: 40%' }, $r->maketext("Comment"))
 	);
 	print CGI::Tr(
 		CGI::td([ CGI::hr(), CGI::hr(), "", CGI::hr(), "", CGI::hr(), "", CGI::hr(), "", CGI::hr(), "&nbsp;" ]));
