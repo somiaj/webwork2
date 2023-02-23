@@ -2120,8 +2120,8 @@ sub body {
 			if ($can{showScore}) {
 				print CGI::start_div({class=>'gwMessage'});
 
-				my $scMsg = $r->maketext("Your recorded score on this test (version [_1]) is [_2]/[_3].",
-					$versionNumber, wwRound(2,$recordedScore), $totPossible);
+				my $scMsg = $r->maketext("Your recorded score on this test (version [_1]) is [_2]/[_3] ([_4]%).",
+					$versionNumber, wwRound(2,$recordedScore), $totPossible, wwRound(3, $recordedScore / $totPossible) * 100 );
 				if ($exceededAllowedTime && $recordedScore == 0) {
 					$scMsg .= " " . $r->maketext("You exceeded the allowed time.");
 				}
