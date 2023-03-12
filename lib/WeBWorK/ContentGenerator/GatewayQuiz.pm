@@ -2025,8 +2025,12 @@ sub body {
 			&& $can{showScore})
 		{
 			print CGI::start_div({ class => 'gwMessage' });
-			my $recScore = wwRound(2, $recordedScore);
-			print $r->maketext("The recorded score for this version is  [_1]/[_2].", $recScore, $totPossible);
+			print $r->maketext(
+				'The recorded score for this version is [_1]/[_2] ([_3]%).',
+				'<span id="test-recorded-score">' . wwRound(2, $recordedScore) . '</span>',
+				'<span id="test-total-possible">' . $totPossible . '</span>',
+				'<span id="test-recorded-percent">' . wwRound(3, $recordedScore / $totPossible) * 100 . '</span>'
+			);
 			print CGI::end_div();
 		}
 	} elsif ($will{checkAnswers}) {
@@ -2034,8 +2038,12 @@ sub body {
 			print CGI::start_div({class=>'gwMessage'});
 			print CGI::strong($r->maketext("Your score on this (checked, not recorded) submission is [_1]/[_2].",
 					$attemptScore,$totPossible)), CGI::br();
-			my $recScore = wwRound(2,$recordedScore);
-			print $r->maketext("The recorded score for this version is [_1]/[_2].",$recScore, $totPossible);
+			print $r->maketext(
+				'The recorded score for this version is [_1]/[_2] ([_3]%).',
+				'<span id="test-recorded-score">' . wwRound(2, $recordedScore) . '</span>',
+				'<span id="test-total-possible">' . $totPossible . '</span>',
+				'<span id="test-recorded-percent">' . wwRound(3, $recordedScore / $totPossible) * 100 . '</span>'
+			);
 			print CGI::end_div();
 		}
 	}
@@ -2120,8 +2128,13 @@ sub body {
 			if ($can{showScore}) {
 				print CGI::start_div({class=>'gwMessage'});
 
-				my $scMsg = $r->maketext("Your recorded score on this test (version [_1]) is [_2]/[_3] ([_4]%).",
-					$versionNumber, wwRound(2,$recordedScore), $totPossible, wwRound(3, $recordedScore / $totPossible) * 100 );
+				my $scMsg = $r->maketext(
+					'Your recorded score on this test (version [_1]) is [_2]/[_3] ([_4]%).',
+					$versionNumber,
+					'<span id="test-recorded-score">' . wwRound(2, $recordedScore) . '</span>',
+					'<span id="test-total-possible">' . $totPossible . '</span>',
+					'<span id="test-recorded-percent">' . wwRound(3, $recordedScore / $totPossible) * 100 . '</span>'
+				);
 				if ($exceededAllowedTime && $recordedScore == 0) {
 					$scMsg .= " " . $r->maketext("You exceeded the allowed time.");
 				}
@@ -2223,7 +2236,15 @@ sub body {
 			my $score = $probStatus[ $probOrder[$i] ];
 			$score = $score == 1 ? "\x{1F4AF}" : wwRound(0, 100 * $score);
 			push(@scoreRow,
-				CGI::td({ class => 'score', data_problem_id => $problems[ $probOrder[$i] ]->problem_id }, $score));
+				CGI::td(
+					{
+						class              => 'score',
+						data_problem_id    => $problems[ $probOrder[$i] ]->problem_id,
+						data_problem_value => $problems[ $probOrder[$i] ]->value
+					},
+					$score
+				)
+			);
 		}
 		my @tableRows;
 		my @cols = (CGI::colgroup(CGI::col({ class => 'header' })));
