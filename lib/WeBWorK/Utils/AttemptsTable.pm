@@ -162,7 +162,7 @@ sub new {
 		displayMode         => $options{displayMode} || "MathJax",
 		showHeadline        => $options{showHeadline} // 1,
 		showAnswerNumbers   => $options{showAnswerNumbers} // 1,
-		showAttemptAnswers  =>  $options{showAttemptAnswers} // 1,    # show student answer as entered and simplified
+		showAttemptAnswers  => 0, # $options{showAttemptAnswers} // 1,    # show student answer as entered and simplified
 	                                                                      #  (e.g numerical formulas are calculated to produce numbers)
 		showAttemptPreviews => $options{showAttemptPreviews} // 1,    # show preview of student answer
 		showAttemptResults  => $options{showAttemptResults} // 1,     # show whether student answer is correct
@@ -243,6 +243,7 @@ sub formatAnswerRow {
 	my $answerPreview        = $self->previewAnswer($rh_answer)//'&nbsp;';
 	my $correctAnswer        = $rh_answer->{correct_ans}//'';
 	my $correctAnswerPreview = $self->previewCorrectAnswer($rh_answer)//'&nbsp;';
+	$answerPreview = $answerString unless $answerPreview && $answerPreview ne '&nbsp;';
 
 	my $answerMessage   = $rh_answer->{ans_message}//'';
 	$answerMessage =~ s/\n/<BR>/g;
@@ -295,7 +296,7 @@ sub answerTemplate {
 	push @tableRows,CGI::Tr(
 			($self->showAnswerNumbers) ? CGI::th("#"):'',
 			($self->showAttemptAnswers)? CGI::th($self->maketext("Entered")):'',  # student original answer
-			($self->showAttemptPreviews)? CGI::th($self->maketext("Answer Preview")):'',
+			($self->showAttemptPreviews)? CGI::th($self->maketext("Entered")):'',
 			($self->showAttemptResults)?  CGI::th($self->maketext("Result")):'',
 			($self->showCorrectAnswers)?  CGI::th($self->maketext("Correct Answer")):'',
 			($self->showMessages)?        CGI::th($self->maketext("Message")):'',
