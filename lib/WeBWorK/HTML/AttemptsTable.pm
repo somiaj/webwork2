@@ -223,6 +223,7 @@ sub formatAnswerRow ($self, $rh_answer, $ans_id, $answerNumber) {
 	my $answerPreview        = $self->previewAnswer($rh_answer)        // '&nbsp;';
 	my $correctAnswer        = $rh_answer->{correct_ans}               // '';
 	my $correctAnswerPreview = $self->previewCorrectAnswer($rh_answer) // '&nbsp;';
+	$answerPreview = $answerString unless $answerPreview && $answerPreview ne '&nbsp;';
 
 	my $answerMessage = $rh_answer->{ans_message} // '';
 	$answerMessage =~ s/\n/<BR>/g;
@@ -254,8 +255,7 @@ sub formatAnswerRow ($self, $rh_answer, $ans_id, $answerNumber) {
 	);
 
 	return $c->c(
-		$self->showAnswerNumbers  ? $c->tag('td', $answerNumber)                             : '',
-		$self->showAttemptAnswers ? $c->tag('td', dir => 'auto', $self->nbsp($answerString)) : '',
+		$self->showAnswerNumbers ? $c->tag('td', $answerNumber) : '',
 		$self->showAttemptPreviews
 		? (((defined $answerPreview && $answerPreview ne '') || $self->showAttemptAnswers)
 			? $self->formatToolTip($answerString, $answerPreview)
@@ -281,8 +281,7 @@ sub answerTemplate ($self) {
 			'tr',
 			$c->c(
 				$self->showAnswerNumbers   ? $c->tag('th', '#')                            : '',
-				$self->showAttemptAnswers  ? $c->tag('th', $c->maketext('Entered'))        : '',
-				$self->showAttemptPreviews ? $c->tag('th', $c->maketext('Answer Preview')) : '',
+				$self->showAttemptPreviews ? $c->tag('th', $c->maketext('Entered'))        : '',
 				$self->showAttemptResults  ? $c->tag('th', $c->maketext('Result'))         : '',
 				$self->showCorrectAnswers  ? $c->tag('th', $c->maketext('Correct Answer')) : '',
 				$self->showMessages        ? $c->tag('th', $c->maketext('Message'))        : ''
