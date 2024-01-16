@@ -227,7 +227,7 @@ sub formatAnswerRow ($self, $rh_answer, $ans_id, $answerNumber) {
 
 	my $answerMessage = $rh_answer->{ans_message} // '';
 	$answerMessage =~ s/\n/<BR>/g;
-	my $answerScore = $rh_answer->{score} // 0;
+	my $answerScore = $rh_answer->{score} || 0;
 	$self->{numCorrect} += $answerScore >= 1;
 	$self->{numEssay}   += ($rh_answer->{type} // '') eq 'essay';
 	$self->{numBlanks}++ unless $answerString =~ /\S/ || $answerScore >= 1;
