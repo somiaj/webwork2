@@ -13,11 +13,11 @@
 # Artistic License for more details.
 ################################################################################
 
-package WeBWorK::AchievementItems::ReducedCred;
+package WeBWorK::AchievementItems::NoReducedCred;
 use Mojo::Base 'WeBWorK::AchievementItems', -signatures;
 
-# Item to extend a close date by 24 hours for reduced credit
-# Reduced scoring needs to be enabled for this item to work.
+# Item to remove reduce credit scoring period from a set.
+# Reduced scoring needs to be enabled for this item to be useful.
 
 use WeBWorK::Utils qw(x nfreeze_base64 thaw_base64);
 use WeBWorK::Utils::DateTime qw(between);
@@ -25,11 +25,11 @@ use WeBWorK::Utils::Sets qw(format_set_name_display);
 
 sub new ($class) {
 	return bless {
-		id          => 'ReducedCred',
-		name        => x('Ring of Reduction'),
+		id          => 'NoReducedCred',
+		name        => x('Potion of Power'),
 		description => x(
-			'Enable reduced scoring for a homework set.  This will allow you to submit answers '
-				. 'for partial credit for 24 hours after the close date.'
+			'Remove reduced scoring penalties from an open assignemnt.  You will have to resubmit '
+				. 'any problems that have already been penalized to earn full credit on them.'
 		)
 	}, $class;
 }
@@ -37,19 +37,25 @@ sub new ($class) {
 sub print_form ($self, $sets, $setProblemIds, $c) {
 	my @openSets;
 
+	# Nothing to do if reduced scoring is not enabled.
+	return unless $c->{ce}->{pg}{ansEvalDefaults}{enableReducedScoring};
+
+	# Only show open sets that have reduced scoring enabled.
 	for my $i (0 .. $#$sets) {
 		push(@openSets, [ format_set_name_display($sets->[$i]->set_id) => $sets->[$i]->set_id ])
-			if (between($sets->[$i]->open_date, $sets->[$i]->due_date) && $sets->[$i]->assignment_type eq 'default');
+			if (between($sets->[$i]->open_date, $sets->[$i]->due_date)
+				&& $sets->[$i]->assignment_type eq 'default'
+				&& $sets->[$i]->enable_reduced_scoring);
 	}
 
 	return unless @openSets;
 
 	return $c->c(
-		$c->tag('p', $c->maketext('Choose the set which you would like to enable partial credit for.')),
+		$c->tag('p', $c->maketext('Choose the assignment to remove the reduced scoring pentaly from.')),
 		WeBWorK::AchievementItems::form_popup_menu_row(
 			$c,
-			id         => 'red_set_id',
-			label_text => $c->maketext('Set Name'),
+			id         => 'no_reduce_set_id',
+			label_text => $c->maketext('Assignment Name'),
 			values     => \@openSets,
 			menu_attr  => { dir => 'ltr' }
 		)
@@ -64,7 +70,7 @@ sub use_item ($self, $userName, $c) {
 
 	return q{This item won't work unless your instructor enables the reduced scoring feature.  }
 		. 'Let your instructor know that you received this message.'
-		unless $ce->{pg}{ansEvalDefaults}{reducedScoringPeriod};
+		unless $ce->{pg}{ansEvalDefaults}{enableReducedScoring};
 
 	my $globalUserAchievement = $db->getGlobalUserAchievement($userName);
 	return "No achievement data?!?!?!" unless $globalUserAchievement->frozen_hash;
@@ -72,19 +78,16 @@ sub use_item ($self, $userName, $c) {
 	my $globalData = thaw_base64($globalUserAchievement->frozen_hash);
 	return "You are $self->{id} trying to use an item you don't have" unless $globalData->{ $self->{id} };
 
-	my $setID = $c->param('red_set_id');
+	my $setID = $c->param('no_reduce_set_id');
 	return "You need to input a Set Name" unless defined $setID;
 
 	my $set     = $db->getMergedSet($userName, $setID);
 	my $userSet = $db->getUserSet($userName, $setID);
 	return "Couldn't find that set!" unless $set && $userSet;
 
-	# Enable reduced scoring on the set and add the reduced scoring period to the due date.
-	my $additionalTime = 60 * $ce->{pg}{ansEvalDefaults}{reducedScoringPeriod};
-	$userSet->enable_reduced_scoring(1);
+	# Remove reduced scoring from the set and set the reduced scoring date to be the due date.
+	$userSet->enable_reduced_scoring(0);
 	$userSet->reduced_scoring_date($set->due_date());
-	$userSet->due_date($set->due_date() + $additionalTime);
-	$userSet->answer_date($set->answer_date() + $additionalTime);
 	$db->putUserSet($userSet);
 
 	$globalData->{ $self->{id} }--;
