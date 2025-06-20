@@ -21,7 +21,7 @@ require WeBWorK::Authen::LTIAdvantage::SubmitGrade;
 # homework grade mode if $manual_update is false.  Otherwise what is updated is determined by a combination of the grade
 # mode and the useriD and setID parameters.  Note that the only required parameter is $c which should be a
 # WeBWorK::Controller object with a valid course environment and database.
-sub massUpdate ($c, $manual_update = 0, $userID = undef, $setID = undef) {
+sub massUpdate ($c, $manual_update = 0, $userID = undef, $setIDs = undef) {
 	my $ce = $c->ce;
 	my $db = $c->db;
 
@@ -43,12 +43,19 @@ sub massUpdate ($c, $manual_update = 0, $userID = undef, $setID = undef) {
 		$db->setSettingValue('LTILastUpdate', time);
 	}
 
+	# If an array of a single set it sent, turn it into a single set submit.
+	$setIDs = $setIDs->[0] if $setIDs && ref($setIDs) eq 'ARRAY' && @$setIDs == 1;
+
 	# Send warning if debug_lti_grade_passback is set.
 	if ($ce->{debug_lti_grade_passback}) {
-		if ($setID && $userID && $ce->{LTIGradeMode} eq 'homework') {
-			warn "LTI Mass Update: Queueing grade update for user $userID and set $setID.\n";
-		} elsif ($setID && $ce->{LTIGradeMode} eq 'homework') {
-			warn "LTI Mass Update: Queueing grade update for all users assigned to set $setID.\n";
+		if ($setIDs && ref($setIDs) ne 'ARRAY' && $userID && $ce->{LTIGradeMode} eq 'homework') {
+			warn "LTI Mass Update: Queueing grade update for user $userID and set $setIDs.\n";
+		} elsif ($setIDs && ref($setIDs) ne 'ARRAY' && $ce->{LTIGradeMode} eq 'homework') {
+			warn "LTI Mass Update: Queueing grade update for all users assigned to set $setIDs.\n";
+		} elsif ($setIDs && $userID && $ce->{LTIGradeMode} eq 'homework') {
+			warn "LTI Mass Update: Queueing grade update for $userID for @$setIDs sets.\n";
+		} elsif ($setIDs && $ce->{LTIGradeMode} eq 'homework') {
+			warn "LTI Mass Update: Queueing grade update for all users for @$setIDs sets.\n";
 		} elsif ($userID) {
 			warn "LTI Mass Update: Queueing grade update of all sets assigned to user $userID.\n";
 		} else {
@@ -56,7 +63,7 @@ sub massUpdate ($c, $manual_update = 0, $userID = undef, $setID = undef) {
 		}
 	}
 
-	$c->minion->enqueue(lti_mass_update => [ $userID, $setID ], { notes => { courseID => $ce->{courseName} } });
+	$c->minion->enqueue(lti_mass_update => [ $userID, $setIDs ], { notes => { courseID => $ce->{courseName} } });
 
 	return;
 }
