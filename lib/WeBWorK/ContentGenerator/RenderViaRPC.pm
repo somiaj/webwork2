@@ -23,7 +23,12 @@ sub initializeRoute ($c, $routeCaptures) {
 	$c->{rpc} = 1;
 
 	$c->stash(disable_cookies => 1)
-		if $c->current_route eq 'render_rpc' && $c->param('disableCookies') && $c->config('allow_unsecured_rpc');
+		if $c->current_route eq 'render_rpc'
+		&& $c->param('disableCookies')
+		&& $c->param('courseID')
+		&& $c->param('courseID') eq 'PreTeXt'
+		&& $c->param('user')
+		&& $c->param('user') eq 'PreTeXt';
 
 	# This provides compatibility for legacy html2xml parameters.
 	# This should be deleted when the html2xml endpoint is removed.
