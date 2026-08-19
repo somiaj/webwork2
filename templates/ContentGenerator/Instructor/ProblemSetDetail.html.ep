@@ -383,13 +383,16 @@
 					</button>
 				</div>
 			% }
-			<div class="input-group d-inline-flex flex-nowrap w-auto py-1">
-				<%= label_for problem_displaymode => maketext('Display Mode:'), class => 'input-group-text' =%>
-				<%= select_field 'problem_displaymode' => [
-						grep { exists $display_modes->{$_} } @{ $ce->{pg}{displayModes} }
-					],
-					id => 'problem_displaymode', class => 'form-select w-auto flex-grow-0' =%>
-			</div>
+			% my @modes = grep { exists $display_modes->{$_} } @{ $ce->{pg}{displayModes} };
+			% if (@modes > 1) {
+				<div class="input-group d-inline-flex flex-nowrap w-auto py-1">
+					<%= label_for problem_displaymode => maketext('Display Mode:'), class => 'input-group-text' =%>
+					<%= select_field 'problem_displaymode' => [ @modes ],
+						id => 'problem_displaymode', class => 'form-select w-auto flex-grow-0' =%>
+				</div>
+			% } else {
+				<%= hidden_field problem_displaymode => $modes[0], id => 'problem_displaymode' =%>
+			% }
 		</div>
 		%
 		<div id="problemset_detail_list" class="container-fluid p-0">
