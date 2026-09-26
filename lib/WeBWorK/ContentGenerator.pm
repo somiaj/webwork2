@@ -1181,7 +1181,10 @@ sub systemLink ($c, $urlpath, %options) {
 			$params{key}  = undef unless exists $params{key};
 		}
 
-		$params{effectiveUser} = undef unless exists $params{effectiveUser};
+		# Local patch to remove adding effectiveUser to all urls unless acting as another user.
+		$params{effectiveUser} = undef
+			if !exists $params{effectiveUser}
+			&& ($c->param('effectiveUser') // '') ne $c->param('user');
 
 		# Make the Shibboleth bypass_query parameter persistent if it is configured.
 		$params{ $c->ce->{shibboleth}{bypass_query} } = undef if $c->ce->{shibboleth}{bypass_query};
