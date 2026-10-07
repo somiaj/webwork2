@@ -30,6 +30,14 @@ sub verify {
 		my ($setName, $versionNum) = grok_vsetID($c->stash('setID'));
 		my $userSet = $c->db->getMergedSetVersion($c->param('effectiveUser'), $setName, $versionNum);
 		return 1 if $userSet && $userSet->use_grade_auth_proctor eq 'No';
+
+		# A user with the proctor_quiz_grade permission does not need
+		# separate proctor authorization to grade a proctored test.
+		return 1 if $c->authz->hasPermissions($c->param('user'), 'proctor_quiz_grade');
+	} else {
+		# A user with the proctor_quiz_login permission does not need separate proctor authorization to enter
+		# (or view) a proctored test. They can simply use their own login.
+		return 1 if $c->authz->hasPermissions($c->param('user'), 'proctor_quiz_login');
 	}
 
 	return $self->SUPER::verify(@_);
