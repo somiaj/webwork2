@@ -203,6 +203,9 @@ sub formatRenderedProblem {
 		$output->{extra_js_files}    = \@extra_js_files;
 		$output->{webwork_js_config} = $ws->c->webwork_js_config($ws->{inputs_ref}{showMathJaxErrors} // 0);
 
+		# Send session key so clients can reuse the session instead of logging in again.
+		$output->{session_key} = $ws->authen->{session_key} if $ce->{renderRPCSendSessionKey};
+
 		# Include third party css and javascript files.  Only jquery, jquery-ui, mathjax, and bootstrap are needed for
 		# PG.  See the comments before the subroutine definitions for load_css and load_js in pg/macros/PG.pl.
 		# The other files included are only needed to make themes work in the webwork2 formats.
